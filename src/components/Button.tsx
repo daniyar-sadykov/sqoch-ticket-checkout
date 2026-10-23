@@ -7,10 +7,13 @@ type ButtonProps = {
   disabled?: boolean
   /**
    * Кнопка закрыта, но остаётся в обходе табом: так скринридер успевает
-   * прочитать причину, связанную через `ariaDescribedBy`. Клик ничего не делает.
+   * прочитать причину, связанную через `ariaDescribedBy`. Клик до обработчика
+   * доходит: закрытая кнопка не делает своего дела, но показывает причины.
    */
   ariaDisabled?: boolean
   ariaDescribedBy?: string
+  /** Доступное имя, когда видимой подписи мало: несколько одинаковых кнопок подряд. */
+  ariaLabel?: string
   block?: boolean
 }
 
@@ -30,16 +33,18 @@ export function Button({
   disabled,
   ariaDisabled,
   ariaDescribedBy,
+  ariaLabel,
   block = true,
 }: ButtonProps) {
   return (
     <button
       id={id}
       type="button"
-      onClick={ariaDisabled ? undefined : onClick}
+      onClick={onClick}
       disabled={disabled}
       aria-disabled={ariaDisabled ? true : undefined}
       aria-describedby={ariaDescribedBy}
+      aria-label={ariaLabel}
       className={`${BASE} ${VARIANTS[variant]} ${block ? 'w-full' : ''}`}
     >
       {children}

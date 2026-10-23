@@ -15,6 +15,7 @@ import {
 } from '@/domain/order'
 import {
   ageFieldKey,
+  allFieldKeys,
   nameFieldKey,
   visibleEmailError,
   visibleOrderErrors,
@@ -130,9 +131,15 @@ export default function CheckoutPage() {
   }
 
   async function confirmOrder() {
-    // Кнопка перехода на невалидном заказе закрыта, но запрет живёт и здесь:
-    // отправка это единственное необратимое действие экрана.
-    if (submitting || !isOrderValid(order)) return
+    if (submitting) return
+
+    // Закрытая кнопка заказ не отправляет, но и молчать ей нельзя: причина
+    // могла остаться скрытой за нетронутым полем. Помечаем тронутыми все поля,
+    // и все причины становятся видны разом.
+    if (!isOrderValid(order)) {
+      setTouched(allFieldKeys(participants))
+      return
+    }
 
     setSubmitting(true)
     setFailure(null)

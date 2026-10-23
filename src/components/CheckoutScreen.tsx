@@ -14,7 +14,7 @@ type CheckoutScreenProps = {
   total: number
   submitting: boolean
   failure: string | null
-  /** Уже видимые ошибки полей по id участника; участник без них отсутствует. */
+  /** Уже видимые ошибки полей, по записи на каждого участника заказа. */
   participantErrors: Record<string, ParticipantErrors>
   emailError?: string
   /** Уже видимые ошибки уровня заказа, в порядке из правил. */
@@ -32,8 +32,6 @@ type CheckoutScreenProps = {
 
 /** Id кнопки добавления: на неё переносится фокус после удаления участника. */
 export const ADD_PARTICIPANT_BUTTON_ID = 'add-participant'
-
-const NO_ERRORS: ParticipantErrors = {}
 
 /**
  * Экран оформления. Своих правил не придумывает: что неверно и что видно,
@@ -97,7 +95,9 @@ export function CheckoutScreen({
 
   return (
     <>
-      <main className="mx-auto w-full max-w-5xl px-4 pt-8 pb-32 lg:pb-12">
+      {/* Нижний запас на телефоне больше прилипшей полосы в худшем её виде:
+          итог, сообщение об отказе сервера и все ошибки уровня заказа разом. */}
+      <main className="mx-auto w-full max-w-5xl px-4 pt-8 pb-64 lg:pb-12">
         <h1 tabIndex={-1} className="text-2xl font-semibold sm:text-3xl">
           Оформление билетов
         </h1>
@@ -112,7 +112,7 @@ export function CheckoutScreen({
                   key={participant.id}
                   participant={participant}
                   index={index}
-                  errors={participantErrors[participant.id] ?? NO_ERRORS}
+                  errors={participantErrors[participant.id]}
                   canRemove={canRemove}
                   onChange={onParticipantChange}
                   onFieldBlur={onFieldBlur}

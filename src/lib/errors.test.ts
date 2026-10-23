@@ -11,6 +11,7 @@ import {
 import {
   EMAIL_FIELD_KEY,
   ageFieldKey,
+  allFieldKeys,
   nameFieldKey,
   visibleEmailError,
   visibleOrderErrors,
@@ -82,6 +83,45 @@ describe('visibleEmailError', () => {
   it('снимает текст, когда email стал верным', () => {
     const order: Order = { participants: [{ id: 'p1', name: 'Аня', age: '30' }], email: 'a@b.ru' }
     expect(visibleEmailError(validateOrder(order), touched(EMAIL_FIELD_KEY))).toBeUndefined()
+  })
+})
+
+describe('allFieldKeys', () => {
+  it('берёт оба поля каждого участника и email', () => {
+    const participants = [
+      { id: 'p1', name: '', age: '' },
+      { id: 'p2', name: '', age: '' },
+    ]
+    expect(allFieldKeys(participants)).toEqual(
+      new Set([nameFieldKey('p1'), ageFieldKey('p1'), nameFieldKey('p2'), ageFieldKey('p2'), EMAIL_FIELD_KEY]),
+    )
+  })
+
+  it('открывает разом все скрытые ошибки заказа', () => {
+    const order: Order = {
+      participants: [
+        { id: 'p1', name: '', age: '' },
+        { id: 'p2', name: 'Петя', age: '10' },
+      ],
+      email: '',
+    }
+    const errors = validateOrder(order)
+    const touchedAll = allFieldKeys(order.participants)
+
+    expect(visibleParticipantErrors('p1', errors.participants.p1, touchedAll)).toEqual({
+      name: ERROR_NAME_REQUIRED,
+      age: ERROR_AGE_REQUIRED,
+    })
+    expect(visibleEmailError(errors, touchedAll)).toBe(ERROR_EMAIL_REQUIRED)
+    expect(visibleOrderErrors(errors, touchedAll)).toEqual([ERROR_GUARDIAN_REQUIRED])
+  })
+
+  it('на пустом составе оставляет только email, и ошибки заказа уже видны', () => {
+    const order: Order = { participants: [], email: 'a@b.ru' }
+    const touchedAll = allFieldKeys(order.participants)
+
+    expect(touchedAll).toEqual(new Set([EMAIL_FIELD_KEY]))
+    expect(visibleOrderErrors(validateOrder(order), touchedAll)).toEqual(validateOrder(order).order)
   })
 })
 

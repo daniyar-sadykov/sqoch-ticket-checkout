@@ -6,7 +6,7 @@
  * фокуса из этого поля, ошибки уровня заказа ждут, пока тронуто хоть одно поле.
  */
 
-import type { OrderErrors, ParticipantErrors } from '@/domain/order'
+import type { OrderErrors, Participant, ParticipantErrors } from '@/domain/order'
 
 /** Ключи полей, по которым уже уходил фокус. */
 export type Touched = ReadonlySet<string>
@@ -29,6 +29,20 @@ export function visibleParticipantErrors(
   if (errors.name !== undefined && touched.has(nameFieldKey(id))) visible.name = errors.name
   if (errors.age !== undefined && touched.has(ageFieldKey(id))) visible.age = errors.age
   return visible
+}
+
+/**
+ * Все поля заказа разом. Клик по закрытой кнопке перехода помечает их
+ * тронутыми: так покупатель сразу видит все причины, по которым заказ не идёт
+ * дальше, а не ищет их по одной.
+ */
+export function allFieldKeys(participants: readonly Participant[]): Touched {
+  const keys = new Set<string>([EMAIL_FIELD_KEY])
+  for (const participant of participants) {
+    keys.add(nameFieldKey(participant.id))
+    keys.add(ageFieldKey(participant.id))
+  }
+  return keys
 }
 
 /** Ошибка email, если по полю уже уходил фокус. */

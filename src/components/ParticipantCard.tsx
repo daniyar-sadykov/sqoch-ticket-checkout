@@ -1,4 +1,4 @@
-import { MAX_NAME_LENGTH, parseAge, type Participant, type ParticipantErrors } from '@/domain/order'
+import { parseAge, type Participant, type ParticipantErrors } from '@/domain/order'
 import { ageFieldKey, nameFieldKey } from '@/lib/errors'
 import { ticketLabelFor } from '@/lib/format'
 
@@ -38,7 +38,13 @@ export function ParticipantCard({
     <li className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
       <div className="flex items-center justify-between gap-3">
         <p className="text-sm font-medium text-muted">Участник {index + 1}</p>
-        <Button variant="secondary" block={false} disabled={!canRemove} onClick={() => onRemove(participant.id)}>
+        <Button
+          variant="secondary"
+          block={false}
+          disabled={!canRemove}
+          ariaLabel={`Удалить участника ${index + 1}`}
+          onClick={() => onRemove(participant.id)}
+        >
           Удалить
         </Button>
       </div>
@@ -51,7 +57,6 @@ export function ParticipantCard({
           onChange={(name) => onChange(participant.id, { name })}
           onBlur={() => onFieldBlur(nameFieldKey(participant.id))}
           error={errors.name}
-          maxLength={MAX_NAME_LENGTH}
           autoComplete="off"
         />
         <TextField
