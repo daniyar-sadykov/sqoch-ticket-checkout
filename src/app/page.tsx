@@ -26,6 +26,7 @@ import { submitOrder } from '@/lib/api'
 
 import { ADD_PARTICIPANT_BUTTON_ID, CheckoutScreen } from '@/components/CheckoutScreen'
 import { participantFieldId } from '@/components/ParticipantCard'
+import { ReviewScreen } from '@/components/ReviewScreen'
 import { SuccessScreen } from '@/components/SuccessScreen'
 
 /**
@@ -35,12 +36,17 @@ import { SuccessScreen } from '@/components/SuccessScreen'
  * отправки. Правила не дублируются: верность спрашивается у `@/domain/order`,
  * видимость ошибок у `@/lib/errors`.
  *
- * Стори 3 ведёт покупателя от экрана оформления сразу к результату. Экран
- * проверки заказа встаёт между ними в стори 4, исход «мест не осталось»
- * добавляется к результату в стори 5.
+ * Покупатель идёт оформление -> проверка -> результат. Экраны это состояние
+ * одной страницы, а не маршруты: возврат с проверки ничего не восстанавливает,
+ * потому что состав, email и тронутые поля остаются здесь нетронутыми, а
+ * `CheckoutScreen` просто не рисуется. Исход «мест не осталось» добавляется к
+ * результату в стори 5.
  */
 
-type Screen = { name: 'checkout' } | { name: 'success'; orderNumber: string }
+type Screen =
+  | { name: 'checkout' }
+  | { name: 'review' }
+  | { name: 'success'; orderNumber: string }
 
 /**
  * Id первого участника задан константой, а не вычисляется: значение, разное на
@@ -130,16 +136,26 @@ export default function CheckoutPage() {
     focusById(ADD_PARTICIPANT_BUTTON_ID)
   }
 
-  async function confirmOrder() {
-    if (submitting) return
-
-    // Закрытая кнопка заказ не отправляет, но и молчать ей нельзя: причина
-    // могла остаться скрытой за нетронутым полем. Помечаем тронутыми все поля,
-    // и все причины становятся видны разом.
+  /** Кнопка формы: проверить заказ и перейти на экран проверки, без запроса. */
+  function goToReview() {
+    // Закрытая кнопка дальше не ведёт, но и молчать ей нельзя: причина могла
+    // остаться скрытой за нетронутым полем. Помечаем тронутыми все поля, и все
+    // причины становятся видны разом.
     if (!isOrderValid(order)) {
       setTouched(allFieldKeys(participants))
       return
     }
+
+    setFailure(null)
+    setScreen({ name: 'review' })
+  }
+
+  /**
+   * Кнопка экрана проверки: только отправка. Заказ заново не проверяется, на
+   * этот экран попадают лишь валидным, а править его здесь нечем.
+   */
+  async function confirmOrder() {
+    if (submitting) return
 
     setSubmitting(true)
     setFailure(null)
@@ -164,6 +180,20 @@ export default function CheckoutPage() {
     setScreen({ name: 'checkout' })
   }
 
+  if (screen.name === 'review') {
+    return (
+      <ReviewScreen
+        participants={participants}
+        email={email}
+        total={total}
+        submitting={submitting}
+        failure={failure}
+        onEdit={() => setScreen({ name: 'checkout' })}
+        onConfirm={confirmOrder}
+      />
+    )
+  }
+
   if (screen.name === 'success') {
     return (
       <SuccessScreen
@@ -181,8 +211,6 @@ export default function CheckoutPage() {
       participants={participants}
       email={email}
       total={total}
-      submitting={submitting}
-      failure={failure}
       participantErrors={participantErrors}
       emailError={visibleEmailError(errors, touched)}
       orderErrors={visibleOrderErrors(errors, touched)}
@@ -194,7 +222,7 @@ export default function CheckoutPage() {
       onFieldBlur={markTouched}
       onAddParticipant={addParticipant}
       onRemoveParticipant={removeParticipant}
-      onSubmit={confirmOrder}
+      onSubmit={goToReview}
     />
   )
 }

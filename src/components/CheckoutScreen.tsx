@@ -12,8 +12,6 @@ type CheckoutScreenProps = {
   participants: Participant[]
   email: string
   total: number
-  submitting: boolean
-  failure: string | null
   /** Уже видимые ошибки полей, по записи на каждого участника заказа. */
   participantErrors: Record<string, ParticipantErrors>
   emailError?: string
@@ -27,6 +25,7 @@ type CheckoutScreenProps = {
   onFieldBlur: (key: string) => void
   onAddParticipant: () => void
   onRemoveParticipant: (id: string) => void
+  /** Переход на экран проверки. Заказ отсюда больше не отправляется. */
   onSubmit: () => void
 }
 
@@ -41,8 +40,6 @@ export function CheckoutScreen({
   participants,
   email,
   total,
-  submitting,
-  failure,
   participantErrors,
   emailError,
   orderErrors,
@@ -56,8 +53,6 @@ export function CheckoutScreen({
   onRemoveParticipant,
   onSubmit,
 }: CheckoutScreenProps) {
-  const actionLabel = submitting ? 'Отправляем...' : 'Перейти к подтверждению'
-
   /**
    * Блок с кнопкой перехода стоит на экране дважды: в боковой сводке и в
    * прилипшей полосе. Каждому нужен свой id, иначе `aria-describedby` указывает
@@ -69,11 +64,6 @@ export function CheckoutScreen({
 
     return (
       <div>
-        {failure ? (
-          <p role="alert" className="mb-3 text-sm text-danger">
-            {failure}
-          </p>
-        ) : null}
         {hasOrderErrors ? (
           <ul id={errorsId} className="mb-3 space-y-1 text-sm text-danger">
             {orderErrors.map((text) => (
@@ -83,11 +73,10 @@ export function CheckoutScreen({
         ) : null}
         <Button
           onClick={onSubmit}
-          disabled={submitting}
           ariaDisabled={!orderValid}
           ariaDescribedBy={hasOrderErrors ? errorsId : undefined}
         >
-          {actionLabel}
+          Перейти к подтверждению
         </Button>
       </div>
     )
@@ -96,7 +85,7 @@ export function CheckoutScreen({
   return (
     <>
       {/* Нижний запас на телефоне больше прилипшей полосы в худшем её виде:
-          итог, сообщение об отказе сервера и все ошибки уровня заказа разом. */}
+          итог, кнопка и все ошибки уровня заказа разом. */}
       <main className="mx-auto w-full max-w-5xl px-4 pt-8 pb-64 lg:pb-12">
         <h1 tabIndex={-1} className="text-2xl font-semibold sm:text-3xl">
           Оформление билетов
