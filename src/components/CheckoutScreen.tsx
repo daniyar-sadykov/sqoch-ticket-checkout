@@ -12,6 +12,8 @@ type CheckoutScreenProps = {
   participants: Participant[]
   email: string
   total: number
+  /** Остаток мест с сервера, для шапки мероприятия. null, пока ответа нет. */
+  seatsLeft: number | null
   /** Уже видимые ошибки полей, по записи на каждого участника заказа. */
   participantErrors: Record<string, ParticipantErrors>
   emailError?: string
@@ -40,6 +42,7 @@ export function CheckoutScreen({
   participants,
   email,
   total,
+  seatsLeft,
   participantErrors,
   emailError,
   orderErrors,
@@ -93,7 +96,7 @@ export function CheckoutScreen({
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
           <div className="space-y-6">
-            <EventHeader />
+            <EventHeader seatsLeft={seatsLeft} />
 
             <ul className="space-y-4">
               {participants.map((participant, index) => (

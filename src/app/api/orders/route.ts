@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server'
 
+import { takeSeats } from '@/server/seats'
+
 /**
  * Моковый обработчик подтверждения заказа. Бэкенда нет, состояние живёт в
  * памяти процесса.
  *
- * Стори 1 создаёт заказ и выдаёт его номер. Повторную проверку правил заказа
- * добавляет стори 2, остаток мест и отказ при нехватке мест стори 5.
+ * Стори 1 создаёт заказ и выдаёт его номер, стори 5 спрашивает остаток мест и
+ * отказывает при нехватке. Повторную проверку правил заказа добавляет стори 2.
  */
 
 const FIRST_ORDER_NUMBER = 482913
@@ -39,8 +41,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'MALFORMED_BODY' }, { status: 400 })
   }
 
+  // Один участник занимает одно место независимо от типа билета.
+  const participantCount = (body.participants as unknown[]).length
+
+  // Места берутся до выдачи номера: на отказе заказа не возникает, поэтому и
+  // номер не тратится.
+  const seats = takeSeats(participantCount)
+
+  if (!seats.taken) {
+    return NextResponse.json({ error: 'NO_SEATS', seatsLeft: seats.seatsLeft }, { status: 409 })
+  }
+
   const orderNumber = `SQ-${nextOrderNumber}`
   nextOrderNumber += 1
 
-  return NextResponse.json({ orderNumber }, { status: 201 })
+  return NextResponse.json({ orderNumber, seatsLeft: seats.seatsLeft }, { status: 201 })
 }

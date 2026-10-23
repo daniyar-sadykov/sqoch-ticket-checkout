@@ -8,6 +8,8 @@ type ReviewScreenProps = {
   participants: Participant[]
   email: string
   total: number
+  /** Остаток мест с сервера, для шапки мероприятия. null, пока ответа нет. */
+  seatsLeft: number | null
   /** Запрос в пути: обе кнопки закрыты, подтверждение показывает «Отправляем...». */
   submitting: boolean
   /** Текст отказа сервера. Показывается только здесь: отправка живёт на этом экране. */
@@ -24,6 +26,7 @@ export function ReviewScreen({
   participants,
   email,
   total,
+  seatsLeft,
   submitting,
   failure,
   onEdit,
@@ -36,7 +39,7 @@ export function ReviewScreen({
       </h1>
 
       <div className="mt-6 space-y-6">
-        <EventHeader />
+        <EventHeader seatsLeft={seatsLeft} />
 
         <OrderSummary participants={participants} total={total} />
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 
 import {
@@ -22,11 +22,13 @@ import {
   visibleParticipantErrors,
   type Touched,
 } from '@/lib/errors'
-import { submitOrder } from '@/lib/api'
+import { applySeats, fetchSeats, submitOrder } from '@/lib/api'
 
 import { ADD_PARTICIPANT_BUTTON_ID, CheckoutScreen } from '@/components/CheckoutScreen'
+import { DemoPanel } from '@/components/DemoPanel'
 import { participantFieldId } from '@/components/ParticipantCard'
 import { ReviewScreen } from '@/components/ReviewScreen'
+import { SoldOutScreen } from '@/components/SoldOutScreen'
 import { SuccessScreen } from '@/components/SuccessScreen'
 
 /**
@@ -37,16 +39,21 @@ import { SuccessScreen } from '@/components/SuccessScreen'
  * видимость ошибок у `@/lib/errors`.
  *
  * Покупатель идёт оформление -> проверка -> результат. Экраны это состояние
- * одной страницы, а не маршруты: возврат с проверки ничего не восстанавливает,
- * потому что состав, email и тронутые поля остаются здесь нетронутыми, а
- * `CheckoutScreen` просто не рисуется. Исход «мест не осталось» добавляется к
- * результату в стори 5.
+ * одной страницы, а не маршруты: возврат с проверки и с отказа по местам ничего
+ * не восстанавливает, потому что состав, email и тронутые поля остаются здесь
+ * нетронутыми, а `CheckoutScreen` просто не рисуется.
+ *
+ * Остаток мест держит сервер. Здесь он только хранится как `number | null`:
+ * `null` до первого ответа, дальше то число, которое пришло в ответе. Ни одно
+ * число остатка на клиенте не вычисляется.
  */
 
 type Screen =
   | { name: 'checkout' }
   | { name: 'review' }
   | { name: 'success'; orderNumber: string }
+  /** Остаток из отказа сервера: экран показывает его, а не текущее состояние. */
+  | { name: 'soldOut'; seatsLeft: number }
 
 /**
  * Id первого участника задан константой, а не вычисляется: значение, разное на
@@ -81,11 +88,27 @@ export default function CheckoutPage() {
   const [screen, setScreen] = useState<Screen>({ name: 'checkout' })
   const [submitting, setSubmitting] = useState(false)
   const [failure, setFailure] = useState<string | null>(null)
+  const [seatsLeft, setSeatsLeft] = useState<number | null>(null)
 
   const lastParticipantNumber = useRef(FIRST_PARTICIPANT_NUMBER)
 
   const order: Order = { participants, email }
   const total = orderTotal(participants)
+
+  // Остаток спрашивается у сервера на монтаже. Запрос упал, значит остаток
+  // остаётся неизвестным и строки в шапке просто нет: кнопки это не трогает,
+  // нехватку мест определяет сервер в момент подтверждения.
+  useEffect(() => {
+    let cancelled = false
+
+    void fetchSeats().then((seats) => {
+      if (!cancelled && seats !== null) setSeatsLeft(seats)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   // validateOrder чистый и дешёвый, поэтому зовётся на каждый рендер: никакого
   // второго, отстающего от полей набора ошибок в состоянии не держим.
@@ -151,8 +174,12 @@ export default function CheckoutPage() {
   }
 
   /**
-   * Кнопка экрана проверки: только отправка. Заказ заново не проверяется, на
-   * этот экран попадают лишь валидным, а править его здесь нечем.
+   * Кнопка экрана проверки и кнопка «Попробовать снова» на экране отказа по
+   * местам: только отправка. Заказ заново не проверяется, на эти экраны
+   * попадают лишь валидным, а править его там нечем.
+   *
+   * Исходов три: номер заказа, нехватка мест и отказ общего вида. Остаток в
+   * первых двух берётся из ответа сервера как есть.
    */
   async function confirmOrder() {
     if (submitting) return
@@ -165,15 +192,25 @@ export default function CheckoutPage() {
     setSubmitting(false)
 
     if (result.ok) {
+      if (result.seatsLeft !== null) setSeatsLeft(result.seatsLeft)
       setScreen({ name: 'success', orderNumber: result.orderNumber })
       return
     }
 
+    if (result.reason === 'no-seats') {
+      setSeatsLeft(result.seatsLeft)
+      setScreen({ name: 'soldOut', seatsLeft: result.seatsLeft })
+      return
+    }
+
+    // Отказ общего вида показывает экран проверки. С экрана отказа по местам
+    // возвращаемся туда же: иначе сообщение некому показать.
     setFailure(result.message)
+    setScreen({ name: 'review' })
   }
 
-  /** Кнопка «Изменить» на экране проверки. Закрыта, пока запрос в пути: иначе
-   *  ответ сервера догнал бы покупателя на форме и увёл на экран успеха. */
+  /** Кнопки «Изменить» и «Изменить состав». Закрыты, пока запрос в пути: иначе
+   *  ответ сервера догнал бы покупателя на форме и увёл на экран результата. */
   function backToCheckout() {
     if (submitting) return
     setScreen({ name: 'checkout' })
@@ -185,51 +222,96 @@ export default function CheckoutPage() {
     setTouched(new Set())
     setFailure(null)
     setScreen({ name: 'checkout' })
+    // Остаток за время заказа изменился, и новое число знает только сервер.
+    void fetchSeats().then((seats) => {
+      if (seats !== null) setSeatsLeft(seats)
+    })
   }
 
-  if (screen.name === 'review') {
+  /** Кнопка «Применить» демонстрационной панели. */
+  function applyDemoSeats(raw: string) {
+    void applySeats(raw).then((applied) => {
+      // null, значит сервер значение не принял: показанный остаток не меняется.
+      if (applied !== null) setSeatsLeft(applied)
+    })
+  }
+
+  function activeScreen() {
+    if (screen.name === 'review') {
+      return (
+        <ReviewScreen
+          participants={participants}
+          email={email}
+          total={total}
+          seatsLeft={seatsLeft}
+          submitting={submitting}
+          failure={failure}
+          onEdit={backToCheckout}
+          onConfirm={confirmOrder}
+        />
+      )
+    }
+
+    if (screen.name === 'soldOut') {
+      return (
+        <SoldOutScreen
+          seatsLeft={screen.seatsLeft}
+          submitting={submitting}
+          onEditOrder={backToCheckout}
+          onRetry={confirmOrder}
+        />
+      )
+    }
+
+    if (screen.name === 'success') {
+      return (
+        <SuccessScreen
+          orderNumber={screen.orderNumber}
+          participants={participants}
+          email={email}
+          total={total}
+          onNewOrder={startNewOrder}
+        />
+      )
+    }
+
     return (
-      <ReviewScreen
+      <CheckoutScreen
         participants={participants}
         email={email}
         total={total}
-        submitting={submitting}
-        failure={failure}
-        onEdit={backToCheckout}
-        onConfirm={confirmOrder}
-      />
-    )
-  }
-
-  if (screen.name === 'success') {
-    return (
-      <SuccessScreen
-        orderNumber={screen.orderNumber}
-        participants={participants}
-        email={email}
-        total={total}
-        onNewOrder={startNewOrder}
+        seatsLeft={seatsLeft}
+        participantErrors={participantErrors}
+        emailError={visibleEmailError(errors, touched)}
+        orderErrors={visibleOrderErrors(errors, touched)}
+        orderValid={isOrderValid(order)}
+        canAdd={canAddParticipant(participants)}
+        canRemove={canRemoveParticipant(participants)}
+        onParticipantChange={changeParticipant}
+        onEmailChange={changeEmail}
+        onFieldBlur={markTouched}
+        onAddParticipant={addParticipant}
+        onRemoveParticipant={removeParticipant}
+        onSubmit={goToReview}
       />
     )
   }
 
   return (
-    <CheckoutScreen
-      participants={participants}
-      email={email}
-      total={total}
-      participantErrors={participantErrors}
-      emailError={visibleEmailError(errors, touched)}
-      orderErrors={visibleOrderErrors(errors, touched)}
-      orderValid={isOrderValid(order)}
-      canAdd={canAddParticipant(participants)}
-      canRemove={canRemoveParticipant(participants)}
-      onParticipantChange={changeParticipant}
-      onEmailChange={changeEmail}
-      onFieldBlur={markTouched}
-      onAddParticipant={addParticipant}
-      onRemoveParticipant={removeParticipant}
-      onSubmit={goToReview}
-    />
+    <>
+      {activeScreen()}
+
+      {/* Панель живёт под активным экраном, а не внутри формы: она видна
+          всегда, в том числе на проверке и на экранах результата. На телефоне
+          экран оформления держит снизу прилипшую полосу, поэтому там панели
+          нужен такой же запас, иначе полоса её накроет. */}
+      <div
+        className={`mx-auto w-full max-w-5xl px-4 ${
+          screen.name === 'checkout' ? 'pb-64 lg:pb-12' : 'pb-12'
+        }`}
+      >
+        <DemoPanel onApply={applyDemoSeats} />
+      </div>
+    </>
   )
 }
