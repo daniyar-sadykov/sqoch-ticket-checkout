@@ -4,8 +4,8 @@ import { formatRub } from '@/lib/format'
 
 import { Button } from './Button'
 import { EventHeader } from './EventHeader'
-import { ParticipantCard } from './ParticipantCard'
 import { OrderSummary } from './OrderSummary'
+import { ParticipantCard } from './ParticipantCard'
 import { TextField } from './TextField'
 
 type CheckoutScreenProps = {
@@ -61,7 +61,7 @@ export function CheckoutScreen({
    * прилипшей полосе. Каждому нужен свой id, иначе `aria-describedby` указывает
    * на два элемента разом.
    */
-  function action(place: string) {
+  function action(place: 'aside' | 'bar') {
     const errorsId = `order-errors-${place}`
     const hasOrderErrors = orderErrors.length > 0
 
@@ -114,8 +114,7 @@ export function CheckoutScreen({
               карточки в этом обходе не встречались вовсе. Имени секция не
               получает: обход по заголовкам закрывает сам заголовок, а имя
               сделало бы блок ориентиром страницы, каким соседние секции с
-              такими же заголовками не стали. Отступ `space-y-6`, как было у
-              карточек и кнопки до заголовка. */}
+              такими же заголовками не стали. */}
           <section className="space-y-6">
             <h2 className="text-lg font-semibold">Участники</h2>
 

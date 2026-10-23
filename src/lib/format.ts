@@ -18,7 +18,7 @@ export function formatAge(age: number): string {
   return `${age}${NBSP}лет`
 }
 
-export function ticketTypeLabel(type: TicketType): string {
+function ticketTypeLabel(type: TicketType): string {
   return type === 'child' ? 'Детский билет' : 'Полный билет'
 }
 

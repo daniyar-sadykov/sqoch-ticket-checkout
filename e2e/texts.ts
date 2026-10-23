@@ -35,7 +35,7 @@ export const SCREEN = {
   soldOut: 'Мест не осталось',
 } as const
 
-export const PRICE = {
+const PRICE = {
   full: rub('2 000'),
   child: rub('1 000'),
 } as const

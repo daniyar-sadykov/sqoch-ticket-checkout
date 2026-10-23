@@ -39,7 +39,7 @@ const shown = (locator: Locator) => locator.filter({ visible: true })
 /** Экранирование текста спеки, когда из него собирается регулярное выражение. */
 const escapeForRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-async function readSeats(request: APIRequestContext): Promise<number> {
+async function readServerSeats(request: APIRequestContext): Promise<number> {
   const response = await request.get('/api/availability')
   expect(response.ok()).toBe(true)
   const body: unknown = await response.json()
@@ -47,10 +47,10 @@ async function readSeats(request: APIRequestContext): Promise<number> {
   return (body as { seatsLeft: number }).seatsLeft
 }
 
-async function setSeats(request: APIRequestContext, count: number): Promise<void> {
+async function setServerSeats(request: APIRequestContext, count: number): Promise<void> {
   const response = await request.put('/api/availability', { data: { seatsLeft: count } })
   expect(response.ok()).toBe(true)
-  expect(await readSeats(request)).toBe(count)
+  expect(await readServerSeats(request)).toBe(count)
 }
 
 export class CheckoutPage {
@@ -176,7 +176,7 @@ export class CheckoutPage {
   /**
    * Клик по кнопке, закрытой через `aria-disabled`. Playwright считает такую
    * кнопку выключенной и обычного клика до неё не доводит, а покупатель её
-   * нажимает: нативного `disabled` на ней нет, и по решению стори 3 закрытая
+   * нажимает: нативного `disabled` на ней нет, и по решению владельца закрытая
    * кнопка перехода обязана на клик показать все скрытые причины. `force`
    * снимает проверку Playwright, а не проверку приложения: обработчик получает
    * тот же самый клик и сам решает, что с ним делать.
@@ -245,11 +245,11 @@ export const test = base.extend<Fixtures>({
    */
   seats: [
     async ({ request }, use) => {
-      await setSeats(request, EVENT.startSeats)
+      await setServerSeats(request, EVENT.startSeats)
 
       await use({
-        set: (count) => setSeats(request, count),
-        read: () => readSeats(request),
+        set: (count) => setServerSeats(request, count),
+        read: () => readServerSeats(request),
       })
     },
     { auto: true },

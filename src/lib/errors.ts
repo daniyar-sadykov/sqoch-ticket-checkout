@@ -11,8 +11,13 @@ import type { OrderErrors, Participant, ParticipantErrors } from '@/domain/order
 /** Ключи полей, по которым уже уходил фокус. */
 export type Touched = ReadonlySet<string>
 
-export const nameFieldKey = (id: string) => `${id}:name`
-export const ageFieldKey = (id: string) => `${id}:age`
+export function nameFieldKey(id: string): string {
+  return `${id}:name`
+}
+
+export function ageFieldKey(id: string): string {
+  return `${id}:age`
+}
 
 /** Email один на весь заказ, поэтому у его ключа нет id участника. */
 export const EMAIL_FIELD_KEY = 'email'

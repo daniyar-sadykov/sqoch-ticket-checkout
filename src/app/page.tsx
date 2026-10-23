@@ -13,6 +13,7 @@ import {
   type Participant,
   type ParticipantErrors,
 } from '@/domain/order'
+import { applySeats, fetchSeats, submitOrder } from '@/lib/api'
 import {
   ageFieldKey,
   allFieldKeys,
@@ -22,7 +23,6 @@ import {
   visibleParticipantErrors,
   type Touched,
 } from '@/lib/errors'
-import { applySeats, fetchSeats, submitOrder } from '@/lib/api'
 
 import { ADD_PARTICIPANT_BUTTON_ID, CheckoutScreen } from '@/components/CheckoutScreen'
 import { DemoPanel } from '@/components/DemoPanel'
@@ -56,16 +56,15 @@ type Screen =
   | { name: 'soldOut'; seatsLeft: number }
 
 /**
- * Id первого участника задан константой, а не вычисляется: значение, разное на
- * сервере и на клиенте, ломает сверку разметки при гидратации. Счётчик
- * следующих id начинается с него и только растёт, поэтому номера удалённых
- * участников не переиспользуются и состояние полей не прилипает к чужой
- * карточке.
+ * Id участника строится из номера, а не вычисляется: значение, разное на
+ * сервере и на клиенте, ломает сверку разметки при гидратации. Счётчик номеров
+ * начинается с первого и только растёт, поэтому номера удалённых участников не
+ * переиспользуются и состояние полей не прилипает к чужой карточке.
  */
-const FIRST_PARTICIPANT_ID = 'participant-1'
 const FIRST_PARTICIPANT_NUMBER = 1
+const participantId = (number: number) => `participant-${number}`
 
-function emptyParticipant(id = FIRST_PARTICIPANT_ID): Participant {
+function emptyParticipant(id = participantId(FIRST_PARTICIPANT_NUMBER)): Participant {
   return { id, name: '', age: '' }
 }
 
@@ -101,8 +100,6 @@ export default function CheckoutPage() {
   const [seatsLeft, setSeatsLeft] = useState<number | null>(null)
 
   const lastParticipantNumber = useRef(FIRST_PARTICIPANT_NUMBER)
-  // Начальное значение берётся из состояния, а не повторяет его литералом:
-  // `useRef` запоминает его на первом рендере и дальше не перечитывает.
   const shownScreen = useRef(screen.name)
 
   const order: Order = { participants, email }
@@ -128,11 +125,9 @@ export default function CheckoutPage() {
   // начинает обход заново с начала документа, а скринридеру сменившийся экран
   // не объявляет никто.
   //
-  // Сторожем стоит прежнее имя экрана, а не флаг «уже монтировались»: страница
-  // только открылась, и красть фокус у документа не за что, а повторный прогон
-  // эффекта на том же экране фокус не трогает. Флаг этого не даёт: в строгом
-  // режиме разработки эффект прогоняется дважды, и второй прогон на первом же
-  // рендере уводил фокус на заголовок.
+  // Сторожем стоит прежнее имя экрана, а не флаг «уже монтировались»: в строгом
+  // режиме разработки эффект прогоняется дважды, и флаг уводил бы фокус на
+  // заголовок сразу после загрузки, когда красть его у документа не за что.
   useEffect(() => {
     if (shownScreen.current === screen.name) return
 
@@ -170,7 +165,7 @@ export default function CheckoutPage() {
     if (!canAddParticipant(participants)) return
 
     lastParticipantNumber.current += 1
-    const added = emptyParticipant(`participant-${lastParticipantNumber.current}`)
+    const added = emptyParticipant(participantId(lastParticipantNumber.current))
 
     setFailure(null)
     // Фокус переходит на поле новой карточки, поэтому разметка нужна сразу.
@@ -344,10 +339,9 @@ export default function CheckoutPage() {
           всегда, в том числе на проверке и на экранах результата. Ширина
           обёртки повторяет ширину активного экрана, иначе панель оказывается
           шире блока над ней. Нижний запас под прилипшую полосу формы стоит
-          здесь, а не у формы: панель теперь последний блок страницы, и запас
-          нужен один. Его размер взят с экрана: на 360 px полоса занимает 101 px
-          без причин отказа и 133 px с одной, 176 px покрывают и две. Прежние
-          256 px оставляли внизу страницы 155 px пустоты. */}
+          здесь, а не у формы: панель последний блок страницы, и запас нужен
+          один. Его размер взят с экрана: на 360 px полоса занимает 101 px без
+          причин отказа и 133 px с одной, 176 px покрывают и две. */}
       <div
         className={`mx-auto w-full px-4 ${
           screen.name === 'checkout' ? 'max-w-5xl pb-44 lg:pb-12' : 'max-w-2xl pb-12'

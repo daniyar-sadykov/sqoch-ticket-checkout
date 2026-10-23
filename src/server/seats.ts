@@ -22,7 +22,8 @@ export function readSeats(): number {
   return seatsLeft
 }
 
-/** Задаёт остаток. Нужен демонстрационной панели и тестам. */
+/** Задаёт остаток. Нужен маршруту остатка, через который его правит
+ *  демонстрационная панель, и тестам. */
 export function setSeats(value: number): number {
   seatsLeft = value
   return seatsLeft

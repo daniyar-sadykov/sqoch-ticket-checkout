@@ -13,9 +13,9 @@ const eslintConfig = defineConfig([
     files: ["e2e/**/*.ts"],
     rules: { "react-hooks/rules-of-hooks": "off" },
   },
-  // Override default ignores of eslint-config-next.
+  // Умолчания eslint-config-next по пропускаемым путям переопределяются здесь.
   globalIgnores([
-    // Default ignores of eslint-config-next:
+    // Что пропускает eslint-config-next по умолчанию:
     ".next/**",
     "out/**",
     "build/**",
