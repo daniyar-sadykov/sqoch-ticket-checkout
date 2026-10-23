@@ -5,6 +5,14 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
+  // Сквозные тесты это не React. Фикстура Playwright отдаёт значение тесту
+  // вызовом `use()`, и правило хуков принимает его за хук React: имя то же,
+  // а проверить, что это за `use`, правило не умеет. В `e2e/` React нет вовсе,
+  // поэтому правило там просто выключено.
+  {
+    files: ["e2e/**/*.ts"],
+    rules: { "react-hooks/rules-of-hooks": "off" },
+  },
   // Override default ignores of eslint-config-next.
   globalIgnores([
     // Default ignores of eslint-config-next:
