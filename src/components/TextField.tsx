@@ -3,6 +3,7 @@ type TextFieldProps = {
   label: string
   value: string
   onChange: (value: string) => void
+  onBlur?: () => void
   error?: string
   hint?: string
   type?: 'text' | 'email'
@@ -13,13 +14,15 @@ type TextFieldProps = {
 
 /**
  * Поле ввода с подписью и местом под ошибку. Ошибка связана с полем через
- * aria-describedby; заполняет её стори 3.
+ * aria-describedby. Когда её показывать, решает форма: `onBlur` сообщает ей,
+ * что по полю уже уходил фокус.
  */
 export function TextField({
   id,
   label,
   value,
   onChange,
+  onBlur,
   error,
   hint,
   type = 'text',
@@ -44,6 +47,7 @@ export function TextField({
         autoComplete={autoComplete}
         value={value}
         onChange={(event) => onChange(event.target.value)}
+        onBlur={onBlur}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy || undefined}
         className={`mt-1.5 block min-h-11 w-full rounded-xl border bg-surface px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-accent ${
