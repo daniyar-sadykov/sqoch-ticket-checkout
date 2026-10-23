@@ -24,8 +24,12 @@ const BASE =
  * Закрытый вид это отдельные цвета, а не прозрачность поверх открытых. Прежний
  * `opacity-50` давал на главной кнопке 2.4:1, а она при `ariaDisabled` остаётся
  * работающей: послабление для выключенных кнопок к ней не применимо, нужен
- * 4.5:1. Вид один на оба способа закрыть кнопку, чтобы на экране они не
- * выглядели разными состояниями.
+ * 4.5:1. По той же причине граница закрытой вторичной кнопки остаётся на
+ * `--control-line`: «Изменить» и «Изменить состав» закрываются через
+ * `ariaDisabled` на время запроса и остаются в обходе табом.
+ *
+ * Вид один на оба способа закрыть кнопку, чтобы на экране они не выглядели
+ * разными состояниями.
  */
 const VARIANTS = {
   primary: {
@@ -34,7 +38,7 @@ const VARIANTS = {
   },
   secondary: {
     open: 'border border-control-line bg-surface text-foreground hover:bg-background',
-    closed: 'border border-line bg-surface text-muted',
+    closed: 'border border-control-line bg-surface text-muted',
   },
 } as const
 

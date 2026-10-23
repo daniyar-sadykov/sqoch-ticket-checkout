@@ -228,8 +228,15 @@ export default function CheckoutPage() {
     }
 
     if (result.reason === 'no-seats') {
+      // Повтор с экрана отказа имени экрана не меняет, поэтому эффект переноса
+      // фокуса молчит, а на экране меняется только число мест. Про неудавшийся
+      // повтор тогда не сообщает ничто, и фокус уводится отсюда. Ждать
+      // перерисовки незачем: заголовок уже в разметке, мы с него и пришли.
+      const repeated = screen.name === 'soldOut'
+
       setSeatsLeft(result.seatsLeft)
       setScreen({ name: 'soldOut', seatsLeft: result.seatsLeft })
+      if (repeated) focusScreenHeading()
       return
     }
 

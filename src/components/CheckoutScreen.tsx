@@ -34,9 +34,6 @@ type CheckoutScreenProps = {
 /** Id кнопки добавления: на неё переносится фокус после удаления участника. */
 export const ADD_PARTICIPANT_BUTTON_ID = 'add-participant'
 
-/** Заголовок блока участников даёт блоку имя, поэтому у него есть id. */
-const PARTICIPANTS_HEADING_ID = 'participants-heading'
-
 /**
  * Экран оформления. Своих правил не придумывает: что неверно и что видно,
  * приходит готовым сверху, экран решает только раскладку.
@@ -70,20 +67,21 @@ export function CheckoutScreen({
 
     return (
       <div>
-        {/* Список живёт в разметке всегда, даже пустой: скринридер объявляет
-            изменение содержимого живой области, а появление самой области
-            ловит не всякий. Причины становятся видны разом по клику на
-            закрытой кнопке, и объявить их больше некому: связку
-            `aria-describedby` читают только при фокусе на кнопке. */}
-        <ul
-          id={errorsId}
-          role="alert"
-          className={`space-y-1 text-sm text-danger ${hasOrderErrors ? 'mb-3' : ''}`}
-        >
-          {orderErrors.map((text) => (
-            <li key={text}>{text}</li>
-          ))}
-        </ul>
+        {/* Живая область это обёртка, а не сам список: роль `alert` на `<ul>`
+            вытеснила бы его роль списка, и пункты остались бы без владельца.
+            Обёртка стоит в разметке всегда, а причины появляются внутри неё:
+            изменение внутри существующей области объявляется надёжнее, чем
+            вставка самой области. Связку `aria-describedby` это не заменяет,
+            её читают только при фокусе на кнопке. */}
+        <div id={errorsId} role="alert" className={hasOrderErrors ? 'mb-3' : ''}>
+          {hasOrderErrors ? (
+            <ul className="space-y-1 text-sm text-danger">
+              {orderErrors.map((text) => (
+                <li key={text}>{text}</li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
         <Button
           onClick={onSubmit}
           ariaDisabled={!orderValid}
@@ -96,8 +94,6 @@ export function CheckoutScreen({
   }
 
   return (
-    /* Запас под прилипшую полосу держит страница: после формы идёт
-       демонстрационная панель, и накрыло бы полосой именно её. */
     <main className="mx-auto w-full max-w-5xl px-4 pt-8 pb-12">
       <h1 tabIndex={-1} className="text-2xl font-semibold sm:text-3xl">
         Оформление билетов
@@ -109,11 +105,13 @@ export function CheckoutScreen({
 
           {/* Заголовок у блока участников такой же, как у соседей: без него
               обход по заголовкам шёл от мероприятия сразу к контакту, и
-              карточки в этом обходе не встречались вовсе. */}
-          <section aria-labelledby={PARTICIPANTS_HEADING_ID} className="space-y-4">
-            <h2 id={PARTICIPANTS_HEADING_ID} className="text-lg font-semibold">
-              Участники
-            </h2>
+              карточки в этом обходе не встречались вовсе. Имени секция не
+              получает: обход по заголовкам закрывает сам заголовок, а имя
+              сделало бы блок ориентиром страницы, каким соседние секции с
+              такими же заголовками не стали. Отступ `space-y-6`, как было у
+              карточек и кнопки до заголовка. */}
+          <section className="space-y-6">
+            <h2 className="text-lg font-semibold">Участники</h2>
 
             <ul className="space-y-4">
               {participants.map((participant, index) => (
@@ -172,8 +170,15 @@ export function CheckoutScreen({
       {/* Полоса лежит внутри `main`, хотя на экране висит поверх него: на
           телефоне в ней главная кнопка экрана, а вне ориентира страницы ей
           не место. Фиксированному положению родитель безразличен, ширину
-          `main` она не наследует. */}
-      <div className="fixed inset-x-0 bottom-0 border-t border-line bg-surface px-4 py-3 lg:hidden">
+          `main` она не наследует, но держится это на том, что ни один предок
+          не задаёт `transform`, `filter`, `perspective`, `contain`,
+          `will-change` или `backdrop-filter`: любой из них станет для полосы
+          содержащим блоком, и она сядет внутрь `max-w-5xl`.
+
+          Запас под полосу держит страница, а не `main`: после формы идёт
+          демонстрационная панель, и накрыло бы полосой именно её. Запас на
+          прокрутку к полю в фокусе стоит в `globals.css`. */}
+      <div className="fixed inset-x-0 bottom-0 border-t border-control-line bg-surface px-4 py-3 lg:hidden">
         <p className="mb-2 flex items-baseline justify-between text-base font-semibold">
           <span>Итого</span>
           <span>{formatRub(total)}</span>
