@@ -172,6 +172,13 @@ export default function CheckoutPage() {
     setFailure(result.message)
   }
 
+  /** Кнопка «Изменить» на экране проверки. Закрыта, пока запрос в пути: иначе
+   *  ответ сервера догнал бы покупателя на форме и увёл на экран успеха. */
+  function backToCheckout() {
+    if (submitting) return
+    setScreen({ name: 'checkout' })
+  }
+
   function startNewOrder() {
     setParticipants([emptyParticipant()])
     setEmail('')
@@ -188,7 +195,7 @@ export default function CheckoutPage() {
         total={total}
         submitting={submitting}
         failure={failure}
-        onEdit={() => setScreen({ name: 'checkout' })}
+        onEdit={backToCheckout}
         onConfirm={confirmOrder}
       />
     )

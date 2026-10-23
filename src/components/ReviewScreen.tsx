@@ -51,13 +51,15 @@ export function ReviewScreen({
           ) : null}
 
           {/* Порядок в разметке и на экране один: подтверждение первым, правка
-              второй. Обе кнопки закрыты, пока запрос в пути, иначе второе
-              нажатие создаст второй заказ, а уход на форму потеряет ответ. */}
+              второй. Пока запрос в пути, обе кнопки закрыты через
+              `ariaDisabled`: второго заказа и ухода на форму не будет, это
+              держат обработчики, а кнопки остаются в обходе табом, и фокус
+              нажавшего не падает на `body` до ответа сервера. */}
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button onClick={onConfirm} disabled={submitting}>
+            <Button onClick={onConfirm} ariaDisabled={submitting}>
               {submitting ? 'Отправляем...' : 'Подтвердить заказ'}
             </Button>
-            <Button onClick={onEdit} variant="secondary" disabled={submitting}>
+            <Button onClick={onEdit} variant="secondary" ariaDisabled={submitting}>
               Изменить
             </Button>
           </div>
