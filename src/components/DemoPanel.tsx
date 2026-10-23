@@ -13,6 +13,7 @@ type DemoPanelProps = {
 }
 
 const DEMO_SEATS_FIELD_ID = 'demo-seats'
+const DEMO_HEADING_ID = 'demo-heading'
 
 /**
  * Демонстрационная панель остатка мест. Отделена от интерфейса заказа и видна
@@ -33,8 +34,15 @@ export function DemoPanel({ onApply }: DemoPanelProps) {
   const valid = parseSeats(value) !== null
 
   return (
-    <section className="rounded-2xl border border-dashed border-line bg-surface p-5 sm:p-6">
-      <h2 className="text-lg font-semibold">Демонстрация</h2>
+    /* Панель стоит вне `main`, поэтому ей нужно имя: названная секция сама
+       становится ориентиром, и содержимое не выпадает из обхода. */
+    <section
+      aria-labelledby={DEMO_HEADING_ID}
+      className="rounded-2xl border border-dashed border-line bg-surface p-5 sm:p-6"
+    >
+      <h2 id={DEMO_HEADING_ID} className="text-lg font-semibold">
+        Демонстрация
+      </h2>
 
       <div className="mt-4 flex max-w-md flex-col gap-3 sm:flex-row sm:items-start">
         <div className="flex-1">

@@ -23,7 +23,8 @@ export function SuccessScreen({ orderNumber, participants, email, total, onNewOr
       <div className="mt-6 space-y-6">
         <OrderSummary participants={participants} total={total} />
 
-        <p className="text-sm text-muted">Билеты отправлены на {email}</p>
+        {/* Email приходит от покупателя и может быть длинным без пробелов. */}
+        <p className="text-sm text-muted wrap-anywhere">Билеты отправлены на {email}</p>
 
         <Button onClick={onNewOrder} variant="secondary" block={false}>
           Новый заказ

@@ -73,6 +73,16 @@ function focusById(id: string) {
   document.getElementById(id)?.focus()
 }
 
+/**
+ * Фокус на заголовок активного экрана. Заголовок ищется разметкой, а не по id:
+ * экран на странице всегда один, и у каждого ровно один элемент первого уровня
+ * внутри `main`. Так заголовку не нужен ни общий на четыре экрана id, ни ref,
+ * протащенный через компоненты, а сами экраны остаются рисующими.
+ */
+function focusScreenHeading() {
+  document.querySelector<HTMLElement>('main h1')?.focus()
+}
+
 /** Тронутые поля удалённого участника больше ни на что не влияют. */
 function forgetParticipant(touched: Touched, id: string): Touched {
   const next = new Set(touched)
@@ -91,6 +101,9 @@ export default function CheckoutPage() {
   const [seatsLeft, setSeatsLeft] = useState<number | null>(null)
 
   const lastParticipantNumber = useRef(FIRST_PARTICIPANT_NUMBER)
+  // Начальное значение берётся из состояния, а не повторяет его литералом:
+  // `useRef` запоминает его на первом рендере и дальше не перечитывает.
+  const shownScreen = useRef(screen.name)
 
   const order: Order = { participants, email }
   const total = orderTotal(participants)
@@ -109,6 +122,23 @@ export default function CheckoutPage() {
       cancelled = true
     }
   }, [])
+
+  // Смена экрана уводит фокус на заголовок нового: нажатая кнопка в этот момент
+  // размонтирована, и без переноса фокус падает на `body`. Тогда клавиатура
+  // начинает обход заново с начала документа, а скринридеру сменившийся экран
+  // не объявляет никто.
+  //
+  // Сторожем стоит прежнее имя экрана, а не флаг «уже монтировались»: страница
+  // только открылась, и красть фокус у документа не за что, а повторный прогон
+  // эффекта на том же экране фокус не трогает. Флаг этого не даёт: в строгом
+  // режиме разработки эффект прогоняется дважды, и второй прогон на первом же
+  // рендере уводил фокус на заголовок.
+  useEffect(() => {
+    if (shownScreen.current === screen.name) return
+
+    shownScreen.current = screen.name
+    focusScreenHeading()
+  }, [screen.name])
 
   // validateOrder чистый и дешёвый, поэтому зовётся на каждый рендер: никакого
   // второго, отстающего от полей набора ошибок в состоянии не держим.
@@ -308,10 +338,12 @@ export default function CheckoutPage() {
           обёртки повторяет ширину активного экрана, иначе панель оказывается
           шире блока над ней. Нижний запас под прилипшую полосу формы стоит
           здесь, а не у формы: панель теперь последний блок страницы, и запас
-          нужен один. */}
+          нужен один. Его размер взят с экрана: на 360 px полоса занимает 101 px
+          без причин отказа и 133 px с одной, 176 px покрывают и две. Прежние
+          256 px оставляли внизу страницы 155 px пустоты. */}
       <div
         className={`mx-auto w-full px-4 ${
-          screen.name === 'checkout' ? 'max-w-5xl pb-64 lg:pb-12' : 'max-w-2xl pb-12'
+          screen.name === 'checkout' ? 'max-w-5xl pb-44 lg:pb-12' : 'max-w-2xl pb-12'
         }`}
       >
         <DemoPanel onApply={applyDemoSeats} />

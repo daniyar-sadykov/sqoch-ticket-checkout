@@ -51,7 +51,7 @@ export function TextField({
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy || undefined}
         className={`mt-1.5 block min-h-11 w-full rounded-xl border bg-surface px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-          error ? 'border-danger' : 'border-line'
+          error ? 'border-danger' : 'border-control-line'
         }`}
       />
       {hint ? (

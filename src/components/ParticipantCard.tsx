@@ -37,7 +37,9 @@ export function ParticipantCard({
   return (
     <li className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-medium text-muted">Участник {index + 1}</p>
+        {/* Заголовок, а не просто строка: иначе обход по заголовкам доходит до
+            блока участников и останавливается, не видя ни одной карточки. */}
+        <h3 className="text-sm font-medium text-muted">Участник {index + 1}</h3>
         <Button
           variant="secondary"
           block={false}

@@ -34,6 +34,9 @@ type CheckoutScreenProps = {
 /** Id кнопки добавления: на неё переносится фокус после удаления участника. */
 export const ADD_PARTICIPANT_BUTTON_ID = 'add-participant'
 
+/** Заголовок блока участников даёт блоку имя, поэтому у него есть id. */
+const PARTICIPANTS_HEADING_ID = 'participants-heading'
+
 /**
  * Экран оформления. Своих правил не придумывает: что неверно и что видно,
  * приходит готовым сверху, экран решает только раскладку.
@@ -67,13 +70,20 @@ export function CheckoutScreen({
 
     return (
       <div>
-        {hasOrderErrors ? (
-          <ul id={errorsId} className="mb-3 space-y-1 text-sm text-danger">
-            {orderErrors.map((text) => (
-              <li key={text}>{text}</li>
-            ))}
-          </ul>
-        ) : null}
+        {/* Список живёт в разметке всегда, даже пустой: скринридер объявляет
+            изменение содержимого живой области, а появление самой области
+            ловит не всякий. Причины становятся видны разом по клику на
+            закрытой кнопке, и объявить их больше некому: связку
+            `aria-describedby` читают только при фокусе на кнопке. */}
+        <ul
+          id={errorsId}
+          role="alert"
+          className={`space-y-1 text-sm text-danger ${hasOrderErrors ? 'mb-3' : ''}`}
+        >
+          {orderErrors.map((text) => (
+            <li key={text}>{text}</li>
+          ))}
+        </ul>
         <Button
           onClick={onSubmit}
           ariaDisabled={!orderValid}
@@ -86,17 +96,24 @@ export function CheckoutScreen({
   }
 
   return (
-    <>
-      {/* Запас под прилипшую полосу держит страница: после формы идёт
-          демонстрационная панель, и накрыло бы полосой именно её. */}
-      <main className="mx-auto w-full max-w-5xl px-4 pt-8 pb-12">
-        <h1 tabIndex={-1} className="text-2xl font-semibold sm:text-3xl">
-          Оформление билетов
-        </h1>
+    /* Запас под прилипшую полосу держит страница: после формы идёт
+       демонстрационная панель, и накрыло бы полосой именно её. */
+    <main className="mx-auto w-full max-w-5xl px-4 pt-8 pb-12">
+      <h1 tabIndex={-1} className="text-2xl font-semibold sm:text-3xl">
+        Оформление билетов
+      </h1>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
-          <div className="space-y-6">
-            <EventHeader seatsLeft={seatsLeft} />
+      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+        <div className="space-y-6">
+          <EventHeader seatsLeft={seatsLeft} />
+
+          {/* Заголовок у блока участников такой же, как у соседей: без него
+              обход по заголовкам шёл от мероприятия сразу к контакту, и
+              карточки в этом обходе не встречались вовсе. */}
+          <section aria-labelledby={PARTICIPANTS_HEADING_ID} className="space-y-4">
+            <h2 id={PARTICIPANTS_HEADING_ID} className="text-lg font-semibold">
+              Участники
+            </h2>
 
             <ul className="space-y-4">
               {participants.map((participant, index) => (
@@ -122,36 +139,40 @@ export function CheckoutScreen({
             >
               Добавить участника
             </Button>
+          </section>
 
-            <section className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
-              <h2 className="text-lg font-semibold">Контакт для билетов</h2>
-              <div className="mt-4 max-w-md">
-                <TextField
-                  id="order-email"
-                  label="Email для билетов"
-                  value={email}
-                  onChange={onEmailChange}
-                  onBlur={() => onFieldBlur(EMAIL_FIELD_KEY)}
-                  error={emailError}
-                  type="email"
-                  inputMode="email"
-                  autoComplete="email"
-                  hint="Один email на весь заказ."
-                />
-              </div>
-            </section>
-
-            <div className="lg:hidden">
-              <OrderSummary participants={participants} total={total} />
+          <section className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
+            <h2 className="text-lg font-semibold">Контакт для билетов</h2>
+            <div className="mt-4 max-w-md">
+              <TextField
+                id="order-email"
+                label="Email для билетов"
+                value={email}
+                onChange={onEmailChange}
+                onBlur={() => onFieldBlur(EMAIL_FIELD_KEY)}
+                error={emailError}
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                hint="Один email на весь заказ."
+              />
             </div>
+          </section>
+
+          <div className="lg:hidden">
+            <OrderSummary participants={participants} total={total} />
           </div>
-
-          <aside className="hidden lg:sticky lg:top-8 lg:block">
-            <OrderSummary participants={participants} total={total} action={action('aside')} />
-          </aside>
         </div>
-      </main>
 
+        <aside className="hidden lg:sticky lg:top-8 lg:block">
+          <OrderSummary participants={participants} total={total} action={action('aside')} />
+        </aside>
+      </div>
+
+      {/* Полоса лежит внутри `main`, хотя на экране висит поверх него: на
+          телефоне в ней главная кнопка экрана, а вне ориентира страницы ей
+          не место. Фиксированному положению родитель безразличен, ширину
+          `main` она не наследует. */}
       <div className="fixed inset-x-0 bottom-0 border-t border-line bg-surface px-4 py-3 lg:hidden">
         <p className="mb-2 flex items-baseline justify-between text-base font-semibold">
           <span>Итого</span>
@@ -159,6 +180,6 @@ export function CheckoutScreen({
         </p>
         {action('bar')}
       </div>
-    </>
+    </main>
   )
 }

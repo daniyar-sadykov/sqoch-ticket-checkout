@@ -6,6 +6,10 @@
   --foreground: #16181d;
   --muted: #5b6270;
   --line: #dcdfe5;
+  /* Граница поля ввода и кнопки это не украшение: по ней видно, где кончается
+     элемент управления, и она обязана давать к фону не меньше 3:1. Тонкая
+     --line даёт 1.33:1 и остаётся на карточках, где ничего не обозначает. */
+  --control-line: #7c838f;
   --accent: #1d4ed8;
   --accent-hover: #1b44bb;
   --accent-contrast: #ffffff;
@@ -18,6 +22,7 @@
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-line: var(--line);
+  --color-control-line: var(--control-line);
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-contrast: var(--accent-contrast);
