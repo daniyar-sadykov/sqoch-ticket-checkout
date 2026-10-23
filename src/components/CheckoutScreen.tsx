@@ -87,9 +87,9 @@ export function CheckoutScreen({
 
   return (
     <>
-      {/* Нижний запас на телефоне больше прилипшей полосы в худшем её виде:
-          итог, кнопка и все ошибки уровня заказа разом. */}
-      <main className="mx-auto w-full max-w-5xl px-4 pt-8 pb-64 lg:pb-12">
+      {/* Запас под прилипшую полосу держит страница: после формы идёт
+          демонстрационная панель, и накрыло бы полосой именно её. */}
+      <main className="mx-auto w-full max-w-5xl px-4 pt-8 pb-12">
         <h1 tabIndex={-1} className="text-2xl font-semibold sm:text-3xl">
           Оформление билетов
         </h1>

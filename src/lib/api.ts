@@ -64,7 +64,7 @@ export async function submitOrder(order: Order): Promise<SubmitOrderResult> {
 /** Текущий остаток мест. null, когда запрос упал или ответ не по форме. */
 export async function fetchSeats(): Promise<number | null> {
   try {
-    const response = await fetch('/api/seats')
+    const response = await fetch('/api/availability')
     if (!response.ok) return null
     return readSeatsLeft(await response.json())
   } catch {
@@ -75,14 +75,18 @@ export async function fetchSeats(): Promise<number | null> {
 /**
  * Остаток из демонстрационной панели. На вход идёт то, что набрано в поле:
  * непригодное значение отбивается правилами мест и до сервера не доходит.
- * Возвращает принятый сервером остаток либо null, если он не изменился.
+ *
+ * Возвращает принятый сервером остаток либо null, и null означает только
+ * «принятого числа нет»: значение не прошло правила, запрос упал, сервер
+ * ответил не `ok` или в ответе нет числа. Какой из четырёх случаев это был,
+ * вызывающему не сообщается.
  */
 export async function applySeats(raw: string): Promise<number | null> {
   const seats = parseSeats(raw)
   if (seats === null) return null
 
   try {
-    const response = await fetch('/api/seats', {
+    const response = await fetch('/api/availability', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ seatsLeft: seats }),

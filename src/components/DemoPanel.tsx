@@ -12,7 +12,7 @@ type DemoPanelProps = {
   onApply: (raw: string) => void
 }
 
-export const DEMO_SEATS_FIELD_ID = 'demo-seats'
+const DEMO_SEATS_FIELD_ID = 'demo-seats'
 
 /**
  * Демонстрационная панель остатка мест. Отделена от интерфейса заказа и видна
@@ -25,8 +25,11 @@ export const DEMO_SEATS_FIELD_ID = 'demo-seats'
 export function DemoPanel({ onApply }: DemoPanelProps) {
   const [value, setValue] = useState('')
 
-  // Непригодное значение остатком не станет, и кнопка об этом говорит видом:
-  // своего текста ошибки у служебного поля нет.
+  // Непригодное значение остатком не станет, и кнопка об этом говорит видом.
+  // Закрыта она нативно, а не через `ariaDisabled`: причины текстом у
+  // служебного поля нет, а `ariaDisabled` в этом проекте заведён ровно затем,
+  // чтобы причину читали по связке. Фокус при этом не теряется: значение
+  // меняется только из поля, то есть когда фокус не на кнопке.
   const valid = parseSeats(value) !== null
 
   return (
@@ -45,7 +48,7 @@ export function DemoPanel({ onApply }: DemoPanelProps) {
           />
         </div>
         <div className="sm:pt-7">
-          <Button onClick={() => onApply(value)} variant="secondary" block={false} ariaDisabled={!valid}>
+          <Button onClick={() => onApply(value)} variant="secondary" block={false} disabled={!valid}>
             Применить
           </Button>
         </div>

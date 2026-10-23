@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 
+import { MAX_PARTICIPANTS } from '@/domain/order'
 import { takeSeats } from '@/server/seats'
 
 /**
@@ -19,10 +20,15 @@ type OrderRequestBody = {
   email?: unknown
 }
 
+/**
+ * Граница состава проверяется и здесь, а не только на клиенте: остаток мест
+ * серверный, и тело с десятью участниками списало бы десять мест.
+ */
 function isWellFormed(body: OrderRequestBody): boolean {
   return (
     Array.isArray(body.participants) &&
     body.participants.length > 0 &&
+    body.participants.length <= MAX_PARTICIPANTS &&
     typeof body.email === 'string' &&
     body.email.trim() !== ''
   )
@@ -49,7 +55,7 @@ export async function POST(request: Request) {
   const seats = takeSeats(participantCount)
 
   if (!seats.taken) {
-    return NextResponse.json({ error: 'NO_SEATS', seatsLeft: seats.seatsLeft }, { status: 409 })
+    return NextResponse.json({ error: 'SOLD_OUT', seatsLeft: seats.seatsLeft }, { status: 409 })
   }
 
   const orderNumber = `SQ-${nextOrderNumber}`
