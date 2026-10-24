@@ -36,7 +36,7 @@ type Seats = {
  */
 const shown = (locator: Locator) => locator.filter({ visible: true })
 
-/** Экранирование текста спеки, когда из него собирается регулярное выражение. */
+/** Экранирование ожидаемого текста, когда из него собирается регулярное выражение. */
 const escapeForRegExp = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
 async function readServerSeats(request: APIRequestContext): Promise<number> {
@@ -228,7 +228,7 @@ export class CheckoutPage {
     )
   }
 
-  /** Живая область с причинами уровня заказа, раздел 6 плана решения. */
+  /** Живая область с причинами уровня заказа. */
   get orderErrors(): Locator {
     return this.page.getByRole('status')
   }

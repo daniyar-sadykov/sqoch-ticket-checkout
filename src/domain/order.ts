@@ -23,7 +23,7 @@ export const MAX_NAME_LENGTH = 60
 export const FULL_TICKET_PRICE = 2000
 export const CHILD_TICKET_PRICE = 1000
 
-/** Тексты ошибок дословно из спецификации экранов, раздел 6. */
+/** Тексты ошибок, которые видит покупатель. */
 export const ERROR_NAME_REQUIRED = 'Укажите имя'
 export const ERROR_NAME_TOO_LONG = `Имя не длиннее ${MAX_NAME_LENGTH} символов`
 export const ERROR_AGE_REQUIRED = 'Укажите возраст'
