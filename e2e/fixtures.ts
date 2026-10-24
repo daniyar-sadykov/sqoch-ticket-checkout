@@ -216,6 +216,18 @@ export class CheckoutPage {
     return this.summary.locator('p').filter({ hasText: 'Итого' })
   }
 
+  /**
+   * Блок «Решения сверх задания». Доступного имени у секции нет, как и у
+   * соседних, поэтому ищется по своему заголовку.
+   */
+  get decisions(): Locator {
+    return shown(
+      this.page
+        .locator('section')
+        .filter({ has: this.page.getByRole('heading', { name: HEADING.decisions, exact: true }) }),
+    )
+  }
+
   /** Живая область с причинами уровня заказа, раздел 6 плана решения. */
   get orderErrors(): Locator {
     return this.page.getByRole('status')

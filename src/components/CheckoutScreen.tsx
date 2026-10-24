@@ -3,6 +3,7 @@ import { EMAIL_FIELD_KEY } from '@/lib/errors'
 import { formatRub } from '@/lib/format'
 
 import { Button } from './Button'
+import { DecisionsNote } from './DecisionsNote'
 import { EventHeader } from './EventHeader'
 import { OrderSummary } from './OrderSummary'
 import { ParticipantCard } from './ParticipantCard'
@@ -165,6 +166,13 @@ export function CheckoutScreen({
           <div className="lg:hidden">
             <OrderSummary participants={participants} total={total} />
           </div>
+
+          {/* Блок решений стоит последним в колонке, то есть ниже сводки
+              заказа: на телефоне сводка идёт прямо над ним, на компьютере она
+              уезжает в боковую колонку, и ниже её оказывается вся левая.
+              Внутрь формы участников блок не встраивается: он объясняет
+              правила, а не участвует в оформлении заказа. */}
+          <DecisionsNote />
         </div>
 
         <aside className="hidden lg:sticky lg:top-8 lg:block">

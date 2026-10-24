@@ -16,6 +16,7 @@ test('экран оформления показывает мероприяти�
   await expect(checkout.card(2)).toHaveCount(0)
   await expect(checkout.page.getByRole('heading', { name: HEADING.contact, exact: true })).toBeVisible()
   await expect(checkout.summary).toBeVisible()
+  await expect(checkout.decisions).toBeVisible()
 
   // Пустой заказ дальше не идёт, и кнопка перехода об этом говорит.
   await expect(checkout.toReviewButton).toHaveAttribute('aria-disabled', 'true')
@@ -125,6 +126,37 @@ test('демонстрационная панель задаёт остаток 
 
   await expect(checkout.eventSeats).toHaveText(TEXT.seatsLeft(3))
   expect(await seats.read()).toBe(3)
+})
+
+test('блок решений сверх задания стоит на оформлении и только там', async ({ checkout, seats }) => {
+  await seats.set(5)
+  await checkout.open()
+
+  // Заголовок второго уровня, как у соседних секций экрана, и две группы
+  // третьим уровнем внутри него.
+  await expect(checkout.page.getByRole('heading', { level: 2, name: HEADING.decisions, exact: true })).toBeVisible()
+  await expect(checkout.decisions.getByText(TEXT.decisionsIntro)).toBeVisible()
+  await expect(
+    checkout.decisions.getByRole('heading', { level: 3, name: HEADING.decisionsStricter, exact: true }),
+  ).toBeVisible()
+  await expect(
+    checkout.decisions.getByRole('heading', { level: 3, name: HEADING.decisionsSilent, exact: true }),
+  ).toBeVisible()
+  await expect(checkout.decisions.getByText(TEXT.decisionGuardian)).toBeVisible()
+  await expect(checkout.decisions.getByText(TEXT.decisionSeatPerParticipant)).toBeVisible()
+
+  // Блок ничем не управляет, поэтому в обходе с клавиатуры его нет: забрать
+  // фокус у формы нечему.
+  await expect(checkout.decisions.locator('a, button, input, select, textarea, [tabindex]')).toHaveCount(0)
+
+  // Блок объясняет правила заполнения, поэтому дальше оформления не идёт.
+  await checkout.fillValidOrder()
+  await checkout.goToReview()
+  await expect(checkout.decisions).toHaveCount(0)
+
+  await checkout.confirmButton.click()
+  await checkout.expectScreen(SCREEN.success)
+  await expect(checkout.decisions).toHaveCount(0)
 })
 
 test('ошибки уровня заказа молчат, пока ни одно поле не тронуто', async ({ checkout }) => {
