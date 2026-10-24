@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { START_SEATS, hasEnoughSeats, parseSeats } from '@/domain/seats'
 
 describe('START_SEATS', () => {
-  it('стартовый остаток из спецификации экранов', () => {
+  it('стартовый остаток двенадцать мест', () => {
     expect(START_SEATS).toBe(12)
   })
 })

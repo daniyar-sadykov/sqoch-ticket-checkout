@@ -78,7 +78,7 @@ export function CheckoutScreen({
             только по клику на закрытой кнопке, но и на первом же уходе фокуса
             из любого поля, и мелькают на каждом пересечении порога 18 при
             наборе возраста. `alert` перебивал бы речь посреди набора, `status`
-            ждёт паузы. Решение владельца, раздел 6 плана решения. */}
+            ждёт паузы. */}
         <div id={errorsId} role="status" className={hasOrderErrors ? 'mb-3' : ''}>
           {hasOrderErrors ? (
             <ul className="space-y-1 text-sm text-danger">
